@@ -1,0 +1,37 @@
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'gcp/cloud-functions/TEMPLATE--etl-live-3-load/**'
+
+jobs:
+  deploy-gcp-cloud-function:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_CREDENTIALS_JSON }}'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-cloud-functions@v1'
+      with:
+        name: 'TEMPLATE--etl-live-3-load'
+        entry_point: 'load'
+        runtime: 'nodejs18'
+        memory_mb: '8192'
+        region: 'us-east1'
+        timeout: '540'
+        source_dir: '${{ github.workspace }}/gcp/cloud-functions/TEMPLATE--etl-live-3-load'
+        event_trigger_type: google.storage.object.finalize
+        event_trigger_resource: 'projects/${{ secrets.GCP_PROJECT_ID }}/buckets/TEMPLATE'
+        event_trigger_service: storage.googleapis.com
+        service_account_email: 'etl-executor@infotrust-internal-integration.iam.gserviceaccount.com'
