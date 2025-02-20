@@ -14,23 +14,22 @@ jobs:
       id-token: 'write'
 
     steps:
-    - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v3'
 
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GCP_SA_CREDENTIALS_JSON }}'
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_CREDENTIALS_JSON }}'
 
-    - id: 'deploy'
-      uses: 'google-github-actions/deploy-cloud-functions@v1'
-      with:
-        name: 'TEMPLATE--etl-live-1-extract'
-        entry_point: 'extract'
-        runtime: 'nodejs18'
-        memory_mb: '8192'
-        region: 'us-east1'
-        timeout: '540'
-        source_dir: '${{ github.workspace }}/gcp/cloud-functions/TEMPLATE--etl-live-1-extract'
-        event_trigger_type: 'google.pubsub.topic.publish'
-        event_trigger_resource: 'projects/${{ secrets.GCP_PROJECT_ID }}/topics/TEMPLATE-etl-live'
-        service_account_email: 'etl-executor@infotrust-internal-integration.iam.gserviceaccount.com'
+      - name: Deploy Cloud Function (Gen 2)
+          run:|
+            gcloud functions deploy TEMPLATE--etl-live-1-extract \
+            --gen2 \
+            --region us-east1 \
+            --runtime nodejs18 \
+            --source gcp/cloud-functions/TEMPLATE--etl-live-1-extract \
+            --entry-point extract \
+            --memory 8192MB \
+            --timeout 540s \
+            --trigger-topic test
+            --service-account test-648@bits-sandbox-450720.iam.gserviceaccount.com # Ensure this SA has the correct permissions.'
